@@ -5,9 +5,9 @@ import time
 
 class Menu:
     def __init__(self, prompt: str, options: list) -> None:
-        self.set_menu(prompt, options)
+        self._set_menu(prompt, options)
 
-    def set_menu(self, prompt: str, opt: list) -> None:
+    def _set_menu(self, prompt: str, opt: list) -> None:
         # consturctor logic
         self.prompt = prompt
         self.options = opt
