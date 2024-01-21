@@ -1,39 +1,47 @@
 import os
-from pathlib import Path
 import sys 
 from Menu import Menu
 from preset import Preset
-from common import Input
-    
-
-
-                
-        
-        
 
 
 
-def main_menu_handler(selectedIndex:int):
-    format_util = "*"*60
-    print(format_util)
-    if selectedIndex == 0: # usr wants to load a preset
-        User = Preset()
-        User.slct_preset()
-        
-    elif selectedIndex == 1: # usr wants to create a preset 
+class MainMenu:
+    @staticmethod
+    def handle_presetLoad():
+        load_preset = Preset()
+        load_preset.load_preset_hndler()
 
-        path = Input.get_path_input(
-            '[?] Enter the file path containing your course directories: '
+    @staticmethod
+    def handle_createPreset():
+        create_preset = Preset()
+        create_preset.preset_creation_hndler()
+        MainMenu.run_menu()
+
+    @staticmethod
+    def handle_help():
+        print('Incomplete option')
+
+    @staticmethod
+    def handle_exit():
+        print("\n[*] Exiting Program [*]".center(60))
+        sys.exit()
+
+    @staticmethod
+    def run_menu():
+        mainMenu = Menu("[ Select one of the following options listed below ]")
+        mainMenu.add_options([
+            "[ Load a Preset ]", "[ Create a Preset ]",
+            "[ Help ]", "[ Exit ]"]
         )
-        new_preset = Preset.auto_preset_data(path)
-        Preset.create_preset_file(new_preset)
-
-    elif selectedIndex == 2: # usr wants help prompt to appear 
-        pass
-
-    elif selectedIndex == 3: # usr wants to exit program
-        pass
-
+        event_handlers = [
+            (1, MainMenu.handle_presetLoad), (2, MainMenu.handle_createPreset),
+            (3, MainMenu.handle_help), (4, MainMenu.handle_exit)
+        ]
+        for item, handler in event_handlers:
+            mainMenu.add_handler(item, handler)
+        mainMenu.display()
+    
+    
 
 
 
@@ -47,8 +55,6 @@ def header() -> None:
   \_\___/\___|_| |_|\___/ \___/|_| |___/\___/|_|   \__/_/ 
                                                           """.center(60))
     print('** created by: rhawk117 **\n'.center(60))
-    print('\t[*] Type > "preset" to create a new json preset')
-    print('\t[*] Type > "sort" to move files from a json preset')
     print('*'*60)
 
 def upon_start() -> None:
@@ -57,9 +63,8 @@ def upon_start() -> None:
     header()
 
 def main() -> None:
-    upon_start()
-    MainMenu = Menu("Select One of the Following",["Load a Preset", "Create a Preset", "Help", "QU"])
-    MainMenu.run_menu(main_menu_handler)
+    header()
+    MainMenu.run_menu()
 
     
 

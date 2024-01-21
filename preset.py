@@ -4,56 +4,79 @@ import sys
 import json
 import re as regex
 from pprint import pprint
-from Menu import Menu
-
+from InquirerPy import prompt
 
 class Preset:
     def _fetch_presets(self) -> list:
         # walks through the preset directory and saves the items into a list
         usr_choices = []
         try:
+            # walk presets
             for _, __, files in os.walk("presets"):
                 for file in files:
-                    print("\t > " + file)
-                    usr_choices.append(file)
+                    if file.endswith(".json"):
+                        print("\t > " + file)
+                        usr_choices.append(file)
+                    
         except:
             print("[!] ERROR: Could not find / walk the presets directory [!]")
             sys.exit()
 
-        return usr_choices
+        # No Presets were found
+        if not usr_choices:
+            print(
+                "[!] ERROR: No presets could be found, cannot perform sorting actions [!]"
+            )
+            sys.exit()
+
+        self.avlble_preset = usr_choices
+     
+        
+
+        
     
-    def slct_preset(self):
-        os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
+    def _slct_preset(self):
+        os.chdir(os.path.abspath(os.path.dirname(sys.argv[0]))) # change to .py file dir
+
+        # check if presets directory exists if not make it for the user
         if not os.path.exists("presets"):
             print("""
                 [!] NOTE The presets directory could not be found, it has been
                 created for future use\n[*] Restart the program and select 'Create a Preset'
                 before trying to load one [*]
             """)
+            os.mkdir("presets")
+            return
+        
+
         try:
             print('[*] Fetching Presets... [*]\n'.center(60))
-            tmp = self._fetch_presets() # get list of options a usr can select
-            if not tmp:
-                print("[!] Couldn't find any preset files, try again [!]")
-                sys.exit()
-                
-            self.avlble_preset = tmp # set property so class functions can use
+            self._fetch_presets() # get list of options a usr can select
+            preset_menu = prompt(
+            [
+                {
+                    "type": "list",
+                    "name": "selected_preset",
+                    "message": "[?] Select a preset file:",
+                    "choices": self.avlble_preset,
+                }
+            ]
+            )
+            self.slcted_preset = preset_menu["selected_preset"]
 
-            presetMenu = Menu("[?] Select One of the following presets listed below [?]", tmp)
-            presetMenu.run_menu(self._file_slct_hndler)
-            # the file select handler will set the value of loaded_preset for us to use 
-          
-        except Exception:
-            print('[!] ERROR: Failed to select user preset, please try again [!]')
+
+        except Exception as e:
+            print(f'[!] ERROR: Failed to select user preset, please try again [!] -> {e}')
             sys.exit()
 
-    def _file_slct_hndler(self, slctedIndex):
+    def _file_slct_hndler(self):
         try:
             tmp = {}
-            print(f"[*] Attempting to Open {self.avlble_preset[slctedIndex]}... [*]")
-            with open(file='presets\\' + self.avlble_preset[slctedIndex], mode='r') as preset:
+            print(f"[*] Attempting to Open {self.slcted_preset}... [*]")
+            with open(file='presets\\' + self.slcted_preset, mode='r') as preset:
                 print(f'[*] Succesfully Opened Preset [*]')
                 tmp = json.load(preset)
+
         except Exception:
             print("[!] ERROR: An error occured while trying to open the preset file, try again [!]")
             sys.exit()
@@ -65,14 +88,17 @@ class Preset:
         self.loaded_preset = tmp
 
     
+    
     def load_preset_hndler(self):
         # when load preset in the main menu is selected 
+        self._slct_preset() # handles most of the logic we need to perform with selecteding a json preset 
+        self._file_slct_hndler()
 
-        self.slct_preset() # handles most of the logic we need to perform with selecteding a json preset 
 
     
 
-    def _auto_preset_check(dir_path) -> bool:
+    def _auto_preset_check(self, dir_path) -> bool:
+
         # list of checks performed before the auto_preset_method
         if not os.path.exists(dir_path):
             print(f'[!] ERROR: The file path provided does not exist')
@@ -92,7 +118,12 @@ class Preset:
         
         return True
 
-    def auto_preset_data(self, dir_path) -> dict:
+    def _auto_preset_data(self) -> None:
+        # prompt user for directory 
+
+        dir_path = Input.get_path_input(
+            "[?] Enter the file path to your course directory: "
+        )
 
         if not self._auto_preset_check(dir_path):
             raise Exception("[!] Cannot Proccess User Request [!]".center(60))
@@ -128,23 +159,31 @@ class Preset:
         self.created_preset = data
 
     
-    def create_preset_file(self) -> None:
-        # Create File Name
+    def _create_preset_file(self) -> None:
+        # Create File Name from user input
         file_name = ''
         while file_name == '' or not Input.check_file_name(file_name, 'json'):
             file_name = input(
-                '[?] Enter the desired file name of the json preset with ".json" at the end: ')
+                '[?] Enter the desired file name of the json preset with ".json" at the end: '
+            )
 
-        # Create a dump dictionary data into JSON
+        # Create and dump dictionary data into JSON
         try:
             with open(file=f'presets\\{file_name}', mode='w') as file_preset:
-                json.dump(self.created_preset, file_preset, indent=4)
+                json.dump(self.created_preset, file_preset, indent = 4)
+
         except Exception:
             print(
                 f'[!] An error occured while trying to create your JSON preset, pleas try again [!] ')
             sys.exit()
 
         print('[*] Preset Successfully Created [*]')
+    
+    def preset_creation_hndler(self):
+        self._auto_preset_data()
+        self._create_preset_file()
+
+
         
 
     

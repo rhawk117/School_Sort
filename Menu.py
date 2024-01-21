@@ -1,54 +1,96 @@
-import os
-import keyboard
-import time
+from InquirerPy import prompt
+from preset import Preset
+import sys
 
 
+def header() -> None:
+    print('*'*60)
+    print(r"""
+   __         _                 _                  _  __  
+  / /___  ___| |__   ___   ___ | |  ___  ___  _ __| |_\ \ 
+ / // __|/ __| '_ \ / _ \ / _ \| | / __|/ _ \| '__| __|\ \
+ \ \\__ \ (__| | | | (_) | (_) | | \__ \ (_) | |  | |_ / /
+  \_\___/\___|_| |_|\___/ \___/|_| |___/\___/|_|   \__/_/ 
+                                                          """.center(60))
+    print('** created by: rhawk117 **\n'.center(60))
+    print('*'*60)
+
+# Generic Re-Usable Menu Class 
 class Menu:
-    def __init__(self, prompt: str, options: list) -> None:
-        self._set_menu(prompt, options)
+    menu_stack: list = []  # Static stack to track menu history
 
-    def _set_menu(self, prompt: str, opt: list) -> None:
-        # consturctor logic
-        self.prompt = prompt
-        self.options = opt
-        self.slctedIndex = 0
+    def __init__(self, prompt):
+        # List of all user options
+        self.options: list = []
 
-    def clear_screen(self):
-        # clears the console
-        os.system('cls' if os.name == 'nt' else 'clear')
+        # Prompt for the User Input
+        self.prompt_message: str = prompt
 
-    # Displays List of options in the console, highlights the selected Index
-    def display_lines(self):
-        self.clear_screen()
-        for i, choice in enumerate(self.options):
-            if i == self.slctedIndex:
-                # Hightlight the Selected Index
-                print("\033[47m\033[30m" + ">>" +
-                      choice.strip() + "\033[0m".center(60))
-            else:
-                print(choice.strip().center(60))
+        # Event Handlers for each menu option
+        self.handlers: dict = {}
 
-    # Core Logic of Menu
-    def run_menu(self, eventHandler):
-        while True:
-            try:
-                if keyboard.is_pressed('up'):
-                    self.slctedIndex = max(0, self.slctedIndex - 1)
-                    self.display_lines()
-                    # Small delay to prevent overly rapid scrolling
-                    time.sleep(0.1)
+        # Handler for the go_back option
+        self.add_handler(None, self.go_back)
+        
 
-                elif keyboard.is_pressed('down'):
-                    self.slctedIndex = min(
-                        len(self.options) - 1, self.slctedIndex + 1)
-                    self.display_lines(self.options, self.slctedIndex)
-                    time.sleep(0.1)  # Small delay
+    def add_options(self, option_titles:list):
+        self.options.extend(
+            {"name": title, "value": index + 1}
+            for index, title in enumerate(option_titles)
+        )
 
-                elif keyboard.is_pressed('enter'):
-                    eventHandler(self.slctedIndex)
-                    break
+    def add_back_option(self, title = "Back"):
+        self.options.append({"name": title, "value": None})
 
-                elif keyboard.is_pressed('esc'):
-                    break
-            except:
-                break  # Break on any keyboard-related exceptions
+    def clear_options(self):
+        self.options = []
+        self.handlers = {}
+        self.add_handler(None, self.go_back)
+
+    def add_handler(self, option_value, handler_function):
+        self.handlers[option_value] = handler_function
+
+    def display(self):
+        Menu.menu_stack.append(self)
+        formatted_options = self.options
+        questions = [
+            {
+                "type": "list",
+                "name": "choice",
+                "message": self.prompt_message,
+                "choices": formatted_options
+            }
+        ]
+        response = prompt(questions)
+        choice = response["choice"]
+        handler = self.handlers.get(choice)
+
+        if handler:
+            handler()
+
+    def go_back(self):
+        if len(Menu.menu_stack) > 1:
+            Menu.menu_stack.pop()  # Remove current menu
+            previous_menu = Menu.menu_stack[-1]  # Get previous menu
+            previous_menu.display()  # Display previous menu
+
+
+
+
+
+
+
+    
+    
+
+
+    
+    
+
+
+
+
+
+
+
+

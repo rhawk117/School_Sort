@@ -2,12 +2,9 @@ import os
 import re as regex 
 
 
-
-
-
 # Input Validation methods
-@staticmethod
 class Input:
+    @staticmethod
     def get_path_input(prompt: str):
         file_path = input('[?] Enter the courses associated file path: ').strip(
             '"')  # remove double quotes
@@ -15,6 +12,7 @@ class Input:
             parsed_path = os.path.normpath(file_path.replace("\\", "\\\\"))
             if os.path.exists(parsed_path) and os.path.isdir(parsed_path):
                 return parsed_path
+            
             print('[!] USER INPUT INVALID [!]\n' +
                   f'> The File Path provided ({parsed_path}) does not exist!')
         except ValueError:
@@ -24,6 +22,7 @@ class Input:
         # recursive call only executed if exception occurs or if the path provided is invalid
         return Input.get_path_input(prompt)
 
+    @staticmethod
     def get_input(prompt: str, options: list) -> str:
         usr_input = input('[?] ' + prompt)
         if usr_input.lower() in options:
@@ -31,6 +30,7 @@ class Input:
         print(f'[!] User Input Invalid [!]\n > Options: ' + ' , '.join(options))
         return Input.get_input(prompt, options)
 
+    @staticmethod
     def check_file_name(file_name: str, extension: str) -> bool:
         '''
         checks the file name inputed by user to see if it's a 
