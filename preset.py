@@ -6,9 +6,22 @@ import re as regex
 from pprint import pprint
 from InquirerPy import prompt
 
+
+
+
+
+# handles all logic related to loading and creating a preset
 class Preset:
-    def _fetch_presets(self) -> list:
-        # walks through the preset directory and saves the items into a list
+
+    # private function that walks through the preset directory
+    # sets the avlble_preset field to generate list of user choices\
+
+    def _fetch_presets(self) -> None:
+        # change to .py file dir
+        os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
+
+
+        # program has successfully found presets dir and attempts to walk and find all .json files    
         usr_choices = []
         try:
             # walk presets
@@ -32,23 +45,8 @@ class Preset:
         self.avlble_preset = usr_choices
      
         
-
-        
-    
+    # private function that generates a menu for the usr to select the desired preset
     def _slct_preset(self):
-        os.chdir(os.path.abspath(os.path.dirname(sys.argv[0]))) # change to .py file dir
-
-        # check if presets directory exists if not make it for the user
-        if not os.path.exists("presets"):
-            print("""
-                [!] NOTE The presets directory could not be found, it has been
-                created for future use\n[*] Restart the program and select 'Create a Preset'
-                before trying to load one [*]
-            """)
-            os.mkdir("presets")
-            return
-        
-
         try:
             print('[*] Fetching Presets... [*]\n'.center(60))
             self._fetch_presets() # get list of options a usr can select
@@ -69,10 +67,11 @@ class Preset:
             print(f'[!] ERROR: Failed to select user preset, please try again [!] -> {e}')
             sys.exit()
 
+    # private function that attempts to open the selected json 
     def _file_slct_hndler(self):
+        print(f"[*] Attempting to Open {self.slcted_preset}... [*]".center(60))
         try:
             tmp = {}
-            print(f"[*] Attempting to Open {self.slcted_preset}... [*]")
             with open(file='presets\\' + self.slcted_preset, mode='r') as preset:
                 print(f'[*] Succesfully Opened Preset [*]')
                 tmp = json.load(preset)
@@ -81,6 +80,7 @@ class Preset:
             print("[!] ERROR: An error occured while trying to open the preset file, try again [!]")
             sys.exit()
 
+        # if the loaded json is null
         if not tmp:
             print("[!] ERROR: Could not open preset ")
             sys.exit()
@@ -88,15 +88,13 @@ class Preset:
         self.loaded_preset = tmp
 
     
-    
+    # public function that uses the private class methods used for handling the logic of loading a preset 
     def load_preset_hndler(self):
         # when load preset in the main menu is selected 
         self._slct_preset() # handles most of the logic we need to perform with selecteding a json preset 
         self._file_slct_hndler()
 
-
-    
-
+    # the checks performed to ensure a preset can be created with the supplied directory
     def _auto_preset_check(self, dir_path) -> bool:
 
         # list of checks performed before the auto_preset_method
@@ -118,6 +116,7 @@ class Preset:
         
         return True
 
+    # private function that autonomously creates a preset without user interaction
     def _auto_preset_data(self) -> None:
         # prompt user for directory 
 
@@ -158,7 +157,7 @@ class Preset:
 
         self.created_preset = data
 
-    
+    # private function that creates the file after recieving all preset information
     def _create_preset_file(self) -> None:
         # Create File Name from user input
         file_name = ''
@@ -179,6 +178,7 @@ class Preset:
 
         print('[*] Preset Successfully Created [*]')
     
+    # public function that handles the "Create A Preset Logic"
     def preset_creation_hndler(self):
         self._auto_preset_data()
         self._create_preset_file()

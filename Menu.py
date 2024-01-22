@@ -1,19 +1,4 @@
 from InquirerPy import prompt
-from preset import Preset
-import sys
-
-
-def header() -> None:
-    print('*'*60)
-    print(r"""
-   __         _                 _                  _  __  
-  / /___  ___| |__   ___   ___ | |  ___  ___  _ __| |_\ \ 
- / // __|/ __| '_ \ / _ \ / _ \| | / __|/ _ \| '__| __|\ \
- \ \\__ \ (__| | | | (_) | (_) | | \__ \ (_) | |  | |_ / /
-  \_\___/\___|_| |_|\___/ \___/|_| |___/\___/|_|   \__/_/ 
-                                                          """.center(60))
-    print('** created by: rhawk117 **\n'.center(60))
-    print('*'*60)
 
 # Generic Re-Usable Menu Class 
 class Menu:
@@ -32,21 +17,24 @@ class Menu:
         # Handler for the go_back option
         self.add_handler(None, self.go_back)
         
-
+    # method takes list parameter and sets the values to menu options
     def add_options(self, option_titles:list):
         self.options.extend(
             {"name": title, "value": index + 1}
             for index, title in enumerate(option_titles)
         )
 
+    # if we want the menu to go back to the previous we can call this func
     def add_back_option(self, title = "Back"):
         self.options.append({"name": title, "value": None})
 
+    # method resets all class attributes
     def clear_options(self):
         self.options = []
         self.handlers = {}
         self.add_handler(None, self.go_back)
 
+    # method adds a handler for a specific option 
     def add_handler(self, option_value, handler_function):
         self.handlers[option_value] = handler_function
 
@@ -61,36 +49,17 @@ class Menu:
                 "choices": formatted_options
             }
         ]
-        response = prompt(questions)
-        choice = response["choice"]
-        handler = self.handlers.get(choice)
+        response = prompt(questions) # display the menu 
+        choice = response["choice"] # save the usrs choice
+        handler = self.handlers.get(choice) # fetch the appropriate handler for the selected choice
 
         if handler:
             handler()
 
+    # method for when we want to go back to the previous menu 
     def go_back(self):
         if len(Menu.menu_stack) > 1:
             Menu.menu_stack.pop()  # Remove current menu
             previous_menu = Menu.menu_stack[-1]  # Get previous menu
             previous_menu.display()  # Display previous menu
-
-
-
-
-
-
-
-    
-    
-
-
-    
-    
-
-
-
-
-
-
-
 

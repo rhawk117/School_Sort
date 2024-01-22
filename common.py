@@ -4,24 +4,30 @@ import re as regex
 
 # Input Validation methods
 class Input:
+    # method allows us to safely recieve path input from user
     @staticmethod
     def get_path_input(prompt: str):
         file_path = input('[?] Enter the courses associated file path: ').strip(
-            '"')  # remove double quotes
+            '"')  # remove double quotes in file paths with a dir with spaces
         try:
-            parsed_path = os.path.normpath(file_path.replace("\\", "\\\\"))
+            parsed_path = os.path.normpath(file_path.replace("\\", "\\\\")) # normalize and adjust path for storage
+
+            # ensure the path provided is both a directory and the path exists
             if os.path.exists(parsed_path) and os.path.isdir(parsed_path):
                 return parsed_path
             
-            print('[!] USER INPUT INVALID [!]\n' +
-                  f'> The File Path provided ({parsed_path}) does not exist!')
         except ValueError:
             print(
                 '[!] Could not normalize file path provided, please re-enter the key and file path for this entry [!]')
 
+        print('[!] USER INPUT INVALID [!]\n'.center(60) + 
+              f'> The File Path provided ({parsed_path}) does not exist!')
+        
         # recursive call only executed if exception occurs or if the path provided is invalid
         return Input.get_path_input(prompt)
 
+
+    # method allows us to recieve input from the user based upon a list of options
     @staticmethod
     def get_input(prompt: str, options: list) -> str:
         usr_input = input('[?] ' + prompt)
@@ -30,6 +36,7 @@ class Input:
         print(f'[!] User Input Invalid [!]\n > Options: ' + ' , '.join(options))
         return Input.get_input(prompt, options)
 
+    # method allows us to check a file name for both an extension and if it can be saved properly
     @staticmethod
     def check_file_name(file_name: str, extension: str) -> bool:
         '''
