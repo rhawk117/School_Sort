@@ -1,3 +1,5 @@
+# *** created by rhawk117 ***
+# preset.py -- the core logic of preset creation & loading presets
 import os
 from common import Input
 import sys
@@ -7,15 +9,11 @@ from pprint import pprint
 from InquirerPy import prompt
 
 
-
-
-
 # handles all logic related to loading and creating a preset
 class Preset:
 
     # private function that walks through the preset directory
     # sets the avlble_preset field to generate list of user choices\
-
     def _fetch_presets(self) -> None:
         # change to .py file dir
         os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
@@ -46,7 +44,7 @@ class Preset:
      
         
     # private function that generates a menu for the usr to select the desired preset
-    def _slct_preset(self):
+    def _slct_preset(self) -> None:
         try:
             print('[*] Fetching Presets... [*]\n'.center(60))
             self._fetch_presets() # get list of options a usr can select
@@ -85,6 +83,7 @@ class Preset:
             print("[!] ERROR: Could not open preset ")
             sys.exit()
 
+        # set value to class attribute to allow us to chain multiple functions together
         self.loaded_preset = tmp
 
     
@@ -135,17 +134,34 @@ class Preset:
 
             # create keys in nested dictionary with first layer of subdirs (only) 
             # with key being the name and value being the path
-            if depth == 1:  # First level subdirectories
+            if depth == 1:  # First level of subdirectories
                 numPattern = regex.compile(r'\d+')
                 sub_dir_name = os.path.basename(path)
                 sub_dir_name = "".join(numPattern.findall(sub_dir_name))
-                data[sub_dir_name] = {}
-                data[sub_dir_name].update({"DirPath": path})
-                data[sub_dir_name].update(
-                    {
-                        sub[:3]: os.path.join(path, sub) for sub in subdirs
-                    }
-                )
+                sub_dir_data = { "Src": path }
+
+                # Iterate over each subdirectory and add to sub_dir_data
+                for sub in subdirs:
+                    sub = sub.strip()
+
+                    if sub == 'Homework' or sub == 'homework':
+                        sub_key = 'HW'
+
+                    elif sub == 'Notes' or sub == 'notes':
+                        sub_key = 'Notes'
+
+                    elif len(sub) < 3:
+                        sub_key = sub
+                    
+                    else:
+                        sub_key = sub[:3]
+
+                    sub_value = os.path.join(path, sub) # save the path to the directory 
+                    sub_dir_data[sub_key] = sub_value
+
+                # Add subdirectory data to main data dictionary
+                data[sub_dir_name] = sub_dir_data
+
 
         print('\n[*] Preset Data Succesfully Generated [*]\n'.center(60))
         pprint(data, indent = 6)
@@ -159,14 +175,15 @@ class Preset:
 
     # private function that creates the file after recieving all preset information
     def _create_preset_file(self) -> None:
-        # Create File Name from user input
+
+        # Prompt usr for a file name for the new preset created
         file_name = ''
         while file_name == '' or not Input.check_file_name(file_name, 'json'):
             file_name = input(
                 '[?] Enter the desired file name of the json preset with ".json" at the end: '
             )
 
-        # Create and dump dictionary data into JSON
+        # Create and dump dictionary data into the newly named and created json
         try:
             with open(file=f'presets\\{file_name}', mode='w') as file_preset:
                 json.dump(self.created_preset, file_preset, indent = 4)
@@ -176,7 +193,7 @@ class Preset:
                 f'[!] An error occured while trying to create your JSON preset, pleas try again [!] ')
             sys.exit()
 
-        print('[*] Preset Successfully Created [*]')
+        print('[*] Preset Successfully Created [*]'.center(60))
     
     # public function that handles the "Create A Preset Logic"
     def preset_creation_hndler(self):

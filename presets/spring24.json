@@ -1,25 +1,25 @@
 {
     "3320": {
-        "DirPath": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320",
-        "Hom": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Homework",
+        "Src": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320",
+        "HW": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Homework",
         "Lec": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Lecture Slides",
-        "Not": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Notes",
+        "Notes": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Notes",
         "Syl": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\AIST-3320\\Syllabus"
     },
     "3400": {
-        "DirPath": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400",
-        "Hom": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400\\Homework"
+        "Src": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400",
+        "HW": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400\\Homework"
     },
     "3100": {
-        "DirPath": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100",
+        "Src": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100",
         "Lec": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\Lecture Slides",
         "M00": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\M00 Course Schedule.html",
-        "Not": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\Notes",
+        "Notes": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\Notes",
         "SAN": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\SANS_Cheat_Sheet",
         "Syl": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CYBR-3100\\Syllabus"
     },
     "2650": {
-        "DirPath": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\MINF-2650",
+        "Src": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\MINF-2650",
         "Ass": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\MINF-2650\\Assignments",
         "Syl": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\MINF-2650\\Syllabus"
     }

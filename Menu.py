@@ -1,5 +1,6 @@
+# *** created by rhawk117 ***
+# menu.py -- implements a menu object that is re-usuable throughout program
 from InquirerPy import prompt
-
 # Generic Re-Usable Menu Class 
 class Menu:
     menu_stack: list = []  # Static stack to track menu history
@@ -38,6 +39,7 @@ class Menu:
     def add_handler(self, option_value, handler_function):
         self.handlers[option_value] = handler_function
 
+    # once all handlers and options are created this function runs the logic needed to run the menu
     def display(self):
         Menu.menu_stack.append(self)
         formatted_options = self.options

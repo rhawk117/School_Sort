@@ -1,6 +1,7 @@
+# *** created by rhawk117 ***
+# common.py -- contains static usr input validation & checks
 import os 
 import re as regex 
-
 
 # Input Validation methods
 class Input:
