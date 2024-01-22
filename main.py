@@ -49,15 +49,45 @@ class MainMenu:
             print('''[i] If you would like to learn how the program works and how it sorts files, select the <<'help'>> option in the main menu to ensure you understand the naming conventions required to sort files [i]
                         \n''')
             time.sleep(3)
-            print(('*' * 60) + '\n\n')
-            input('[*] Press "Enter" to continue [*]\n'.center(60))
+            
+        
+        if not os.path.exists("presets\\usr_paths.json"):
+            with open("presets\\usr_paths.json", mode='w') as _:
+                pass
+            print("[!] NOTE: To improve user experience all inputed directories will be saved in usr_paths.json for future reference [!]")
+            print("[i] This allows you to easily revisit directories that contain course files\n" +
+                   "you want to move without the need of user input, temporarily pausing program [i]"
+            )
+            time.sleep(3)
+            
+        print(('*' * 60) + '\n\n')
+        input('[*] Press "Enter" to continue [*]\n'.center(60))
             
             
     # When the user selects 'Load a Preset'
     @staticmethod
     def handle_presetLoad() -> None:
         load_preset = Preset()
+        # this handles selecting a previous generated preset 
         load_preset.load_preset_hndler()
+
+        if not load_preset.check_prev_dirs():
+            load_preset.usr_dir_input()
+        else:
+            yesNo = Menu("[ Select a previously used file path ]")
+            yesNo.add_options([
+                "[ Previous File Paths ]",
+                "[ Input new File Path ]"
+                ]
+            )
+            yesNo.add_handler(1, load_preset.prev_dirs)
+            yesNo.add_handler(2, load_preset.usr_dir_input)
+            yesNo.display()
+        
+            
+
+
+
 
     # When a user selects 'Create a Preset'
     @staticmethod

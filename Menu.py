@@ -65,3 +65,6 @@ class Menu:
             previous_menu = Menu.menu_stack[-1]  # Get previous menu
             previous_menu.display()  # Display previous menu
 
+
+
+
