@@ -8,7 +8,7 @@ import re as regex
 from pprint import pprint
 from InquirerPy import prompt
 from dataclasses import dataclass
-
+from send2trash import send2trash 
 
 # handles all logic related to loading and creating a preset
 class Preset:
@@ -19,43 +19,47 @@ class Preset:
     # created_preset => the preset that was created by the user 
     # target_files => list of TargetFile Objects that will be moved 
     # prev_paths => a dictionary loaded from usr_paths.json 
-
+    # all_jsons => list of all jsons in presets
 
     # private function that walks through the preset directory
     # sets the avlble_preset field to generate list of user choices
     def _fetch_presets(self) -> None:
         # change to .py file dir
         os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
-
-
         # program has successfully found presets dir and attempts to walk and find all .json files    
-        usr_choices = []
+        self.avlble_preset, self.all_jsons = [], []
         try:
             # walk through presets
             for _, __, files in os.walk("presets"):
                 for file in files:
-                    if file.endswith(".json"):
-                        print("\t > " + file)
-                        usr_choices.append(file)
-                    
+                    self._preset_filter(file)
         except:
             print("[!] ERROR: Could not find / walk the presets directory [!]")
             sys.exit()
 
         # No Presets were found
-        if not usr_choices:
+        if not self.all_jsons or not self.avlble_preset:
             print(
-                "[!] ERROR: No presets could be found, cannot perform sorting actions [!]"
+                "[!] ERROR: No presets could be found, cannot perform sorting actions [!]".center(60)
             )
             sys.exit()
 
-        self.avlble_preset = usr_choices
+
+    def _preset_filter(self, file):
+        # the logic used to sort json list properties
+        if file.endswith(".json"): 
+            # The user should not be able to select usr_paths
+            if file != "usr_paths.json":
+                self.avlble_preset.append(file)
+            self.all_jsons.append(file)
+
      
     # private function that generates a menu for the usr to select the desired preset
     def _slct_preset(self) -> None:
         try:
-            print('[*] Fetching Presets... [*]\n'.center(60))
+            print('[i] Fetching Presets... [i]\n'.center(60))
             self._fetch_presets() # get list of options a usr can select
+            self._check_presets() # Check if any file paths in all presets are invalid
             preset_menu = prompt(
             [
                 {
@@ -73,9 +77,74 @@ class Preset:
             print(f'[!] ERROR: Failed to select user preset, please try again [!] -> {e}')
             sys.exit()
 
-    
+
+    # private function that checks 
+    def _check_presets(self):
+        for files in self.avlble_preset:
+            print(f'[i] Checking the {files} for invalid file paths...')
+            path = os.path.join("presets", files)
+            self._check_preset_paths(path)
+        
 
 
+
+
+    def _check_preset_paths(self, file_path):
+        # checking each of the paths in a preset for paths that don't exist
+        tmp = {}
+        with open(file_path, mode='r') as tmp_preset:
+            tmp = json.load(tmp_preset)
+
+        file_name = os.path.basename(file_path)
+
+        # .json preset opened is empty
+        if not tmp:
+            self._invalid_preset_menu(file_path)
+        
+        for dicts in tmp.values():
+            if self._check_course_path(dicts):
+                self._invalid_preset_menu(file_path)
+            
+        
+
+    # iterates through the values of a dictionary and checks if the values are invalid file paths
+    def _check_course_path(self, course_data:dict) -> bool:
+        bad_paths = False
+        for paths in course_data.values():
+            if not os.path.exists(paths):
+                print(f"[!] {paths} does not exist [!]".center(60))
+                bad_paths = True
+
+        return bad_paths
+
+
+    # Menu that appears upon discovering an invalid file path in a preset
+    def _invalid_preset_menu(self, file_path):
+        file_name = os.path.basename(file_path)
+        warning = f"""
+            [!] WARNING: while validating the path of your presets {file_name}, 
+            the script found a file path that does not exist or discovered the preset was empty
+            \n[ ? Would you like to remove it ?]
+        """
+        dir_menu = prompt(
+                [
+                    {
+                        "type": "list",
+                        "name": "usr_opt",
+                        "message": warning,
+                        "choices": ["[ Remove Preset ]", "[ Leave invalid Preset ]"],
+                    }
+                ]
+            )
+        usr_choice = dir_menu["usr_opt"]
+        if usr_choice == "[ Remove Preset ]":
+            print(f"[i] Sending {file_name} to your recycling bin to recover in case of an error from the script... [i]".center(60))
+            send2trash(file_path)
+        else:
+            print(f'[i] Leaving invalid preset behind.. [i]'.center(60))
+            return 
+        
+            
     # private function that attempts to open the selected json 
     def _file_slct_hndler(self) -> bool:
         print(f"[i] Attempting to Open {self.slcted_preset}... [i]".center(60))
@@ -99,7 +168,7 @@ class Preset:
         return True
 
     # attempts to load previously inputed file paths from the user
-    def check_prev_dirs(self) -> bool:
+    def check_prev_paths(self) -> bool:
         if not os.path.exists("presets\\usr_paths.json"):
             print(
                 '[!] ERROR: The usr_paths.json was not found, user input required for path fields [!]'.center(60)
@@ -110,13 +179,14 @@ class Preset:
             # Attempt to load usr_paths.json
             tmp = {}
             with open("presets\\usr_paths.json", mode='r') as usr_data:
-                tmp = json.loads(usr_data)
+                tmp = json.load(usr_data)
             
             # usr_paths.json is empty
             if not tmp:
                 print(
                     "[i] No previous file paths were found in usr_paths.json, user input required for path fields[i]".center(60))
                 return False
+            
             
             print(
                 f'[i] Previous user paths successfully found, user input is optional [i]'.center(60)
@@ -127,7 +197,7 @@ class Preset:
         
         except Exception as ex:
             print(
-                f'[!] ERROR: An error occured while trying load previous user file paths, user input required for path fields, error details below [!]')
+                f'[!] ERROR: An error occured while trying load previous user file paths likely due to the file being empty from no previous path input, user input required for path fields, error details below [!]')
             print(f'[i] {ex}')
             return False
     
@@ -141,12 +211,12 @@ class Preset:
                 # the usr_paths.json is empty
                 data = {}
             
-            key_check = os.basename(path_input)
+            key_check = os.path.basename(path_input)
             if key_check in data:
                 print("[i] The inputted file path already exists in usr_paths.json, not saving input [i]")
                 return 
             
-            new_data = { os.basename(path_input): path_input }
+            new_data = { key_check : path_input }
             
             # Update data & save into class property
             data.update(new_data)
@@ -177,17 +247,18 @@ class Preset:
                         "type": "list",
                         "name": "select_path",
                         "message": "[?] Select a preset file:",
-                        "choices": list(self.prev_dirs.keys()),
+                        "choices": list(self.prev_paths.keys()),
                     }
                 ]
             )
             file_path_key = dir_menu["select_path"]
-            if file_path_key not in self.prev_dirs:
+            if file_path_key not in self.prev_paths:
                 print(
-                    "[!] Due to an error with the path keys you must type the file path to proceed, sorry lol [!]")
+                    "[!] Due to an error with the path keys you must type the file path to proceed, sorry lol [!]"
+                )
                 self.usr_dir_input()
 
-            self.usr_slct_dir = self.prev_dirs[file_path_key]
+            self.usr_slct_dir = self.prev_paths[file_path_key]
             print(
                 f"[i] User input successfully recieved, attempting to sort {self.usr_slct_dir} [i]".center(60)
             )
@@ -227,6 +298,7 @@ class Preset:
         # then abbreviated path & then name of file, so the length should be > 3
         return '_' in file and file[0:3].isdigit() and len(file.split('_')) >= 3
         
+    # core logic of find movable files, puts the pieces together
     def _comb_dir(self):
         if not os.path.exists(self.usr_slct_dir):
             print("[i] The user selected file path does not exist, perhaps a previously saved path in usr_paths.json no longer exists [i]")
@@ -261,6 +333,7 @@ class Preset:
             print(ex)
             return False
 
+    # Displays TargetFiles ToString method to user before moving them
     def display_move_files(self):
         if not self.target_files:
             print("[!] No Files are in the target_files list, cannot display them to the console [!]")
@@ -270,16 +343,13 @@ class Preset:
         for targets in self.target_files:
             print(targets)
 
-    # <<wip>> check file paths in json files to ensure reliabilty 
-    # def check_json_paths(self, json_file, is_preset:bool):
-
-
     # public function that uses the private class methods used for handling the logic of loading a preset 
     def load_preset_hndler(self):
         # when load preset in the main menu is selected 
         self._slct_preset() # handles most of the logic we need to perform with selecteding a json preset 
         self._file_slct_hndler()
 
+    # public function that incorporates the logic of the previous private ones
     def fetch_files(self):
         if not self._comb_dir():
             print(f"[!] An occured occured while combing {self.usr_slct_dir}, cannot move files please try again")
@@ -393,58 +463,7 @@ class Preset:
         self._auto_preset_data()
         self._create_preset_file()
 
-    # <<REFACTORED>>
-    # def comb_dir(self, dir_path):
-    #     if not self.loaded_preset:
-    #         print(
-    #             "[!] ERROR: Cannot use a null preset, try again with a valid preset [!]"
-    #         )
-    #         return
-
-    #     movable = []  # find a list of movable files
-    #     try:
-    #         for root, _, files in os.walk(dir_path):
-    #             for file in files:
-    #                 # All sorted files should contain an underscore and the first 4 digits should be the course number
-    #                 if '_' in file and file[0:3].isdigit():
-    #                     tmp = file.split('_')
-    #                     # when the length is less than 3 that means either there isn't a crn, abreviated output dir or file name
-    #                     # tmp[0] is the course number which should be a key in the dictionary
-    #                     if not tmp or len(tmp) < 3 or tmp[0] not in self.loaded_preset.keys():
-    #                         print(f'> Skipped {file}')
-    #                         continue
-
-    #                     crse_data = self.loaded_preset.get(tmp[0])
-    #                     # The 2nd index of tmp is the abreviated key for the output directory, check to see if it's in the file
-    #                     if tmp[1] not in crse_data.keys():
-    #                         print(f' > Skipped {file}, {tmp[1]} not in keys')
-    #                         continue
-
-    #                     # tmp[1] is the abreviated destination directory which we use to access it's value, the destination path
-    #                     destination = crse_data.get(tmp[1])
-    #                     source = os.path.abspath(
-    #                         os.path.join(root, file)
-    #                     )
-    #                     if not os.path.exists(destination):
-    #                         raise Exception("[!] CRITICAL ERROR: The destination file path in the json preset does not exist [!]\n" +
-    #                                         "[!] The preset loaded should not be used again and needs to be reconfigured [!]"
-    #                                         )
-
-    #                     # Create our Data Class for the file we want to move with all the information we need
-    #                     tmp = TargetFile(destination, source)
-    #                     movable.append(tmp)
-    #         if not movable:
-    #             print(
-    #                 f"[!] ERROR: No files were found or could be parsed [!]".center(60))
-    #         # All checks have been passed
-    #         self.target_files = movable
-
-    #     except Exception as ex:
-    #         print(
-    #             f'[!] ERROR: Failed to fecth files from ({dir_path}), cannot sort files [!]')
-    #         print(ex)
-    #         return []
-
+    
             
 
 # representation of the source and destination of files that will be moved

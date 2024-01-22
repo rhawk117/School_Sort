@@ -49,7 +49,8 @@ class MainMenu:
             print('''[i] If you would like to learn how the program works and how it sorts files, select the <<'help'>> option in the main menu to ensure you understand the naming conventions required to sort files [i]
                         \n''')
             time.sleep(3)
-            
+            print(('*' * 60) + '\n\n')
+            input('[*] Press "Enter" to continue [*]\n'.center(60))
         
         if not os.path.exists("presets\\usr_paths.json"):
             with open("presets\\usr_paths.json", mode='w') as _:
@@ -59,9 +60,9 @@ class MainMenu:
                    "you want to move without the need of user input, temporarily pausing program [i]"
             )
             time.sleep(3)
-            
-        print(('*' * 60) + '\n\n')
-        input('[*] Press "Enter" to continue [*]\n'.center(60))
+            print(('*' * 60) + '\n\n')
+            input('[*] Press "Enter" to continue [*]\n'.center(60))
+
             
             
     # When the user selects 'Load a Preset'
@@ -83,6 +84,7 @@ class MainMenu:
             yesNo.add_handler(1, load_preset.prev_dirs)
             yesNo.add_handler(2, load_preset.usr_dir_input)
             yesNo.display()
+        load_preset.fetch_files()
         
             
 
