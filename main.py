@@ -1,6 +1,5 @@
 # *** created by rhawk117 ***
 # main.py -- puts the pieces together
- 
 import os
 import sys 
 from menu import Menu
@@ -63,8 +62,6 @@ class MainMenu:
             print(('*' * 60) + '\n\n')
             input('[*] Press "Enter" to continue [*]\n'.center(60))
 
-            
-            
     # When the user selects 'Load a Preset'
     @staticmethod
     def handle_presetLoad() -> None:
@@ -72,29 +69,35 @@ class MainMenu:
         # this handles selecting a previous generated preset 
         load_preset.load_preset_hndler()
 
-        if not load_preset.check_prev_dirs():
+        if not load_preset.check_prev_paths():
             load_preset.usr_dir_input()
         else:
-            yesNo = Menu("[ Select a previously used file path ]")
-            yesNo.add_options([
-                "[ Previous File Paths ]",
-                "[ Input new File Path ]"
-                ]
-            )
-            yesNo.add_handler(1, load_preset.prev_dirs)
-            yesNo.add_handler(2, load_preset.usr_dir_input)
-            yesNo.display()
+            MainMenu.path_menu(load_preset)
+
         load_preset.fetch_files()
-        
-            
-
-
+    
+    @staticmethod
+    def path_menu(preset_obj):
+        pathMenu = Menu("[ Select a previously used file path ]")
+        pathMenu.add_options([
+            "[ Previous File Paths ]",
+            "[ Input new File Path ]"
+            ]
+        )
+        pathMenu.add_handler(1, preset_obj.prev_dirs)
+        pathMenu.add_handler(2, preset_obj.usr_dir_input)
+        pathMenu.display()
 
 
     # When a user selects 'Create a Preset'
     @staticmethod
     def handle_createPreset() -> None:
         create_preset = Preset()
+        if not create_preset.check_prev_paths():
+            create_preset.usr_dir_input()
+        else:
+            MainMenu.path_menu(create_preset)
+
         create_preset.preset_creation_hndler()
 
         # Upon the creation of a preset, we ask the user if they want to return to the main menu so 
@@ -146,6 +149,7 @@ def main() -> None:
     MainMenu.run_main_menu()
 
     
+
 
 if __name__ == '__main__':
     main()
