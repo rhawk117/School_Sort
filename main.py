@@ -157,7 +157,17 @@ class MainMenu:
             MainMenu.path_menu(load_preset)
 
         load_preset.fetch_files()
+        # At this point all logic has been performed or an Exception has been thrown 
+        finalMenu = Menu("[ Return to Main Menu to use Preset or Exit Program ]")
+        finalMenu.add_options(
+            [ "[ Go To Main Menu ]", "[ Exit Program ]" ]
+        )
+        finalMenu.add_handler(1, MainMenu.run_main_menu())
+        finalMenu.add_handler(2, MainMenu.handle_exit())
     
+        finalMenu.display()
+
+
     @staticmethod
     def path_menu(preset_obj):
         pathMenu = Menu("[ Select a previously used file path ]")
@@ -193,21 +203,27 @@ class MainMenu:
     # When a usr selects 'help'
     @staticmethod
     def handle_help() -> None:
+        
         '''
-        displays a demonstration of how name and sort files 
-        with program, always runs at least once
+            displays a demonstration of how name and sort files 
+            with program, always runs at least once
         '''
+
+
         print('*'*60+'\n\n')
         print('[*] Displaying program tutorial.. [*]'.center(60))
         MainMenu.help_demonstration()
         print('*'*60+'\n\n')
+        MainMenu.run_main_menu()
 
     # When a usr selects 'Exit'
     @staticmethod
     def handle_exit() -> None:
+        
         '''
         when 'Exit' is selected
         '''
+
         print("\n[*] Exiting Program [*]".center(60))
         sys.exit()
 

@@ -9,6 +9,8 @@ from pprint import pprint
 from InquirerPy import prompt
 from dataclasses import dataclass
 from send2trash import send2trash 
+import shutil 
+from threading import Thread
 
 # handles all logic related to loading and creating a preset
 class Preset:
@@ -75,8 +77,6 @@ class Preset:
                 print("[i] Exiting Program [i]".center(60))
                 sys.exit()
 
-
-            
 
     # the logic for filtering files in presets dir by extension and passes usr_paths.json
     def _preset_filter(self, file):
@@ -233,12 +233,6 @@ class Preset:
                     "[i] No previous file paths were found in usr_paths.json, user input required for path fields[i]".center(60))
                 return False
             
-            for i, dicts in enumerate(tmp.values()):
-                if self._check_course_path(dicts):
-                    self._invalid_preset_menu(tmp.values()[i])
-
-
-
             # all checks passed, user can select a previously used file path
             self.prev_paths = tmp
             return True
@@ -425,7 +419,7 @@ class Preset:
             return False
 
     # Displays TargetFiles ToString method to user before moving them
-    def display_move_files(self):
+    def _display_move_files(self):
         if not self.target_files:
             print("[!] No Files are in the target_files list, cannot display them to the console [!]")
             return 
@@ -433,6 +427,65 @@ class Preset:
         # Display TargetFile Objects in the Console to User to Confirm Moving Action
         for targets in self.target_files:
             print(targets)
+        
+        options = ["[  YES  ]", "[ NO ]"]
+        dir_menu = prompt(
+            [
+                {
+                    "type": "list",
+                    "name": "usr_opt",
+                    "message": "[ ? Proceed with File Sort ? ]",
+                    "choices": ["[  YES  ]", "[ NO ]"],
+                }
+            ]
+        )
+        choice = dir_menu["usr_opt"]
+        if choice == options[0]:
+            self._move_files()
+
+        elif choice == options[1]:
+            print("[ Exiting Program ]".center(60))
+            sys.exit()
+    
+
+    def _move_files(self) -> None:
+        
+        '''
+            upon the creation of the target_files attribute,
+            this method will be called to start the threads need
+            before joining them 
+        '''
+
+        app_threads = []
+        for files_moved in self.target_files:
+            src, dst = files_moved.source, files_moved.destination
+            fileThread = Thread(
+                target = self._safe_move,
+                args=(src, dst)
+            )
+            app_threads.append(fileThread)
+            fileThread.start()
+
+        # Run created threads to sort files for efficency
+        for threads in app_threads:
+            threads.join()
+        
+        input('*** PRESS ENTER TO CONTINUE ***'.center(60))
+    
+
+    def _safe_move(self, src, dst):
+        try:
+            shutil.move(src, dst)
+            print(f"\n[ Moved => {src} to => {dst} ]\n".center(60))
+        except Exception as ex:
+            print(
+                f""" [ Cannot Move => {src}] to => file_obj.destination due to an Exception ] \n
+                     \t\t[ <<!>> Please Try Again <<!>> ] \n
+                """.center(60)
+            )
+            print("[ Exception Information ]" + f"\n{ex}\n")
+
+
 
     # public function that uses the private class methods used for handling the logic of loading a preset 
     def load_preset_hndler(self) -> None:
@@ -447,10 +500,16 @@ class Preset:
             print(f"[!] An occured occured while combing {self.usr_slct_dir}, cannot move files please try again")
 
         else:
-            self.display_move_files()
+            self._display_move_files()
 
     # the checks performed to ensure a preset can be created with the supplied directory
     def _auto_preset_checks(self, dir_path) -> bool:
+        
+        '''
+            list of checks to ensure a preset can be made 
+            before performing any action, true if possible
+            false otherwise
+        '''
 
         # list of checks performed before the auto_preset_method
         if not os.path.exists(dir_path):
@@ -473,15 +532,18 @@ class Preset:
 
     # private function that autonomously creates a preset without user interaction
     def _auto_preset_data(self) -> None:
+        
+        '''
+            autonomously creates json preset data after 
+            the user selects a directory
+        '''
 
         # See if the directory entered by the user or selected in the menu can be used 
         if not self._auto_preset_checks(self.usr_slct_dir):
             print("""
                   [!] Cannot Proccess User Request, invalid directory input provided [!]
-                  """)
-            
-        
-        
+                  """
+        )
         self.loaded_preset = {}
         for path, subdirs, _ in os.walk(self.usr_slct_dir):
             # Get the depth of the current directory by counting os.sep in path
@@ -533,6 +595,12 @@ class Preset:
 
     # private function that creates the file after recieving all preset information
     def _create_preset_file(self) -> None:
+        
+        '''
+            upon recieving a file name from the user 
+            we create a .json preset with it saved to
+            the presets dir
+        '''
 
         # Prompt usr for a file name for the new preset created
         file_name = ''
@@ -548,7 +616,8 @@ class Preset:
 
         except Exception:
             print(
-                f'[!] An error occured while trying to create your JSON preset, pleas try again [!] ')
+                f'[!] An error occured while trying to create your JSON preset, pleas try again [!] '
+            )
             sys.exit()
 
         print('[*] Preset Successfully Created [*]'.center(60))
@@ -563,6 +632,14 @@ class Preset:
             return True
 
     def preset_creation(self):
+        
+        '''
+            upon recieving directory input
+            this method uses auto_preset_data
+            & create_preset file to perform all
+            actions required for preset creation
+        '''
+
         self._auto_preset_data()
         self._create_preset_file()
 
