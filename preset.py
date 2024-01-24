@@ -20,33 +20,66 @@ class Preset:
     # target_files => list of TargetFile Objects that will be moved 
     # prev_paths => a dictionary loaded from usr_paths.json 
     # all_jsons => list of all jsons in presets
+    def __init__(self):
+        self.slcted_preset = "unset"
 
-    # private function that walks through the preset directory
-    # sets the avlble_preset field to generate list of user choices
+
     def _fetch_presets(self) -> None:
+        '''          
+             private function that walks through the preset directory
+             sets the avlble_preset field to generate list of user choices
+        '''
         # change to .py file dir
         os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
+
+
         # program has successfully found presets dir and attempts to walk and find all .json files    
         self.avlble_preset, self.all_jsons = [], []
         try:
-            # walk through presets
             for _, __, files in os.walk("presets"):
                 for file in files:
                     self._preset_filter(file)
         except:
             print("[!] ERROR: Could not find / walk the presets directory [!]")
-            sys.exit()
+            
 
         # No Presets were found
         if not self.avlble_preset:
             print(
-                "[!] ERROR: No presets could be found, cannot perform sorting actions [!]".center(60)
+                """[!] ERROR: No presets could be found in the presets dir, the directory [!]
+                   [>] This is either due to the presets directory not existing or having not
+                   [>] created a .json preset. 
+                """.center(60)
             )
-            sys.exit()
+            choices = [
+                "[ Create a preset ]", 
+                "[ exit program ]"
+            ]
 
-    # the logic for filtering files in presets by extension and also passing usr_paths.json
+            yes_no_menu = prompt(
+                [
+                    {
+                        "type": "list",
+                        "name": "usr_opt",
+                        "message": "[ Would you like to create one ]",
+                        "choices": choices,
+                    }
+                ]
+            )
+            choice = yes_no_menu["usr_opt"]
+            if choice == choices[0]:
+                self.usr_dir_input()
+                self.preset_creation()
+
+            elif choice == choice[1]:
+                print("[i] Exiting Program [i]".center(60))
+                sys.exit()
+
+
+            
+
+    # the logic for filtering files in presets dir by extension and passes usr_paths.json
     def _preset_filter(self, file):
-        # the logic used to sort json list properties
         if file.endswith(".json"): 
             # The user should not be able to select usr_paths
             if file != "usr_paths.json":
@@ -103,6 +136,9 @@ class Preset:
 
     # iterates through the values of in the dictionary param and checks if the values are invalid file paths
     def _check_course_path(self, course_data:dict) -> bool:
+        '''
+            checks if a dictionary contains invalid course paths
+        '''
         bad_paths = False
         for paths in course_data.values():
             if not os.path.exists(paths):
@@ -113,6 +149,14 @@ class Preset:
 
     # Menu that appears upon discovering an invalid file path in a preset
     def _invalid_preset_menu(self, file_path) -> None:
+        
+        '''
+            While checking the .json file paths if a .json file
+            has a value in a nested dictionary with a file path that
+            doesn't exist it asks the user if they'd like to delete it 
+            to help imporve program reliability
+        '''
+
         file_name = os.path.basename(file_path)
         warning = f"""
             [!] WARNING: while validating the path of your presets {file_name}, 
@@ -125,7 +169,7 @@ class Preset:
                         "type": "list",
                         "name": "usr_opt",
                         "message": warning,
-                        "choices": ["[ Remove Preset ]", "[ Leave invalid Preset ]"],
+                        "choices": ["[  << Remove Invalid Preset >>  ]", "[ <x> Leave invalid Preset <x> ]"],
                     }
                 ]
             )
@@ -133,13 +177,21 @@ class Preset:
         if usr_choice == "[ Remove Preset ]":
             print(f"[i] Sending {file_name} to your recycling bin to recover in case of an error from the script... [i]".center(60))
             send2trash(file_path)
-        else:
-            print(f'[i] Leaving invalid preset behind.. [i]'.center(60))
             return 
         
+        else:
+            print(f'[i] Leaving invalid preset behind.. [i]'.center(60))
             
+                
     # private function that attempts to open the selected json 
     def _file_slct_hndler(self) -> bool:
+
+        '''
+            Upon successfully selecting a preset this private function
+            sets the loaded_preset property to the value of the json preset
+            selected, returning true if successful
+        '''
+
         print(f"[i] Attempting to Open {self.slcted_preset}... [i]".center(60))
         try:
             tmp = {}
@@ -164,11 +216,12 @@ class Preset:
     def check_prev_paths(self) -> bool:
         if not os.path.exists("presets\\usr_paths.json"):
             print(
-                '[!] ERROR: The usr_paths.json was not found, user input required for path fields [!]'.center(60)
+                '[!] NOTE: The usr_paths.json file in presets was not found, user input will be required for path fields [!]'.center(60)
             )
             return False
         
         try:
+
             # Attempt to load usr_paths.json
             tmp = {}
             with open("presets\\usr_paths.json", mode='r') as usr_data:
@@ -180,20 +233,36 @@ class Preset:
                     "[i] No previous file paths were found in usr_paths.json, user input required for path fields[i]".center(60))
                 return False
             
-            print(
-                f'[i] Previous user paths successfully found, user input is optional [i]'.center(60)
-            )
+            for i, dicts in enumerate(tmp.values()):
+                if self._check_course_path(dicts):
+                    self._invalid_preset_menu(tmp.values()[i])
+
+
+
             # all checks passed, user can select a previously used file path
             self.prev_paths = tmp
             return True
         
         except Exception as ex:
             print(
-                f'[!] ERROR: An error occured while trying load previous user file paths likely due to the file being empty from no previous path input, user input required for path fields, error details below [!]')
-            print(f'[i] {ex}')
+                f'''
+                [!] ERROR: An error occured while trying load previous user file paths likely due to the program running for the first time 
+                [>] User input will now be required for path fields, error details below [!]
+                '''.center(60)
+            )
+            print(f'[ << i >> ] {ex}')
             return False
+        
+
     
     def save_path_input(self, path_input) -> None:
+
+        '''
+            any time we recieve a file path from the user
+            we can save it to usr_paths.json, so next time they have to input one
+            we can create a previous paths menu for easy re-use 
+        '''
+
         try:
             # Check if the file exists and is not empty
             if os.path.exists("presets\\usr_paths.json") and os.path.getsize("presets\\usr_paths.json") > 0:
@@ -225,15 +294,23 @@ class Preset:
             
     # For manual user directory input 
     def usr_dir_input(self) -> None:
-        prompt = "[ Enter the path of the directory containing the course files you'd like to move ]"
+        prompt = "[ Enter the path of the directory containing the course files you'd like to move or create a preset from ]"
         tmp = Input.get_path_input(prompt)
         self.usr_slct_dir = tmp
         self.save_path_input(tmp)
 
     # Optional Menu that displays previously entered directories by the user in a menu 
     def prev_dirs(self):
-        # this check should be redundant but better safe than sorry
+        '''
+            function attempts to use the keys from usr_paths.json dict
+            which when selected in the menu,
+            returns the corresponding 
+            inputs which are just the basenames of directory (i.e dir name) 
+        '''
+
+        # this check should almost always be redundant but better safe than sorry
         if self.prev_dirs:
+            # generate file path menu 
             options = list(self.prev_paths.keys())
             options.append("[ Input a New Path Instead ]")
             dir_menu = prompt(
@@ -247,6 +324,9 @@ class Preset:
                 ]
             )
             file_path_key = dir_menu["select_path"]
+
+            # The last index of options will always be "[ Input a New Path Instead ]" since we appended it 
+            # if block has to run first or an error will occur since it's not a file path
             if file_path_key == options[len(options) - 1]:
                 # the last index of options is the option to enter a new file path
                 self.usr_dir_input()
@@ -258,14 +338,18 @@ class Preset:
                 )
                 self.usr_dir_input()
                 return 
-
             
+            else:           
+                try:
 
-            self.usr_slct_dir = self.prev_paths[file_path_key]
-            print(
-                f"[i] User input successfully recieved, attempting to sort {self.usr_slct_dir} [i]".center(60)
-            )
-            # method end
+                    self.usr_slct_dir = self.prev_paths[file_path_key]
+                    print(
+                        f"[i] User input successfully recieved, attempting to sort {self.usr_slct_dir} [i]".center(60)
+                    )
+                except Exception as ex:
+                    print("[!] An error occured while trying to use the file path provided, please enter it manually")
+                    self.usr_dir_input()
+                # method end
         else:
             print("[!] Due to an error trying to load your previous paths, user input is required ")
             self.usr_dir_input()
@@ -392,7 +476,10 @@ class Preset:
 
         # See if the directory entered by the user or selected in the menu can be used 
         if not self._auto_preset_checks(self.usr_slct_dir):
-            raise Exception("[!] Cannot Proccess User Request, invalid directory input provided [!]")
+            print("""
+                  [!] Cannot Proccess User Request, invalid directory input provided [!]
+                  """)
+            
         
         
         self.loaded_preset = {}
@@ -466,9 +553,16 @@ class Preset:
 
         print('[*] Preset Successfully Created [*]'.center(60))
     
-    # public function that handles the "Create A Preset Logic"
-    def preset_creation_hndler(self):
-        # at this point we've recieved the file path of the directory the preset should be made for
+    
+    def preset_check(self) -> bool:
+        if self.check_prev_paths():
+            return False
+        else:
+            self.usr_dir_input()
+            self.preset_creation()
+            return True
+
+    def preset_creation(self):
         self._auto_preset_data()
         self._create_preset_file()
 
