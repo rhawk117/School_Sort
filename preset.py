@@ -27,22 +27,25 @@ class Preset:
 
 
     def _fetch_presets(self) -> None:
+        
         '''          
              private function that walks through the preset directory
              sets the avlble_preset field to generate list of user choices
         '''
+
         # change to .py file dir
         os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
 
 
         # program has successfully found presets dir and attempts to walk and find all .json files    
-        self.avlble_preset, self.all_jsons = [], []
+        self.avlble_preset = []
         try:
             for _, __, files in os.walk("presets"):
                 for file in files:
                     self._preset_filter(file)
         except:
             print("[!] ERROR: Could not find / walk the presets directory [!]")
+            return 
             
 
         # No Presets were found
@@ -76,7 +79,6 @@ class Preset:
             elif choice == choice[1]:
                 print("[i] Exiting Program [i]".center(60))
                 sys.exit()
-
 
     # the logic for filtering files in presets dir by extension and passes usr_paths.json
     def _preset_filter(self, file):

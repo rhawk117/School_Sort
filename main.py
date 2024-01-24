@@ -6,6 +6,9 @@ from menu import Menu
 from preset import Preset
 import time 
 from pprint import pprint 
+from InquirerPy import prompt
+import json
+
 # implements the logic & classes of program
 class MainMenu:
     # main menu title text
@@ -164,7 +167,7 @@ class MainMenu:
         )
         finalMenu.add_handler(1, MainMenu.run_main_menu())
         finalMenu.add_handler(2, MainMenu.handle_exit())
-    
+
         finalMenu.display()
 
 
@@ -209,12 +212,150 @@ class MainMenu:
             with program, always runs at least once
         '''
 
+        helpMenu = Menu(
+            "[ ? Would you like to load a preset to check the naming conventions or display the program tutorial ? ]"
+        )
+        helpMenu.add_options([
+            "[ Check Preset Naming Conventions ]", "[ View Program Tutorial ]"
+        ])
+        helpMenu.add_handler(1, MainMenu.hndle_preset_name)
+        helpMenu.add_handler(2, MainMenu.hndle_tutorial)
+
+
+    def hndle_preset_name():
+        
+        '''
+            We need to find the user created presets to display
+            the appropriate naming conventions to them, after we do
+            that we call the attempt_preset_load func which upon
+            successfully loading the preset, will display the naming
+            conventions to the user 
+        '''
+
+        print("[i] Attempting to fetch user created presets... [i]")
+        usr_options = MainMenu.attempt_preset_fetch()
+        if not usr_options:
+            print("[i] No program presets were found, please create one before selecting this option.. [i]".center(60))
+            MainMenu.run_main_menu()
+        else:
+            slcted_preset = MainMenu.preset_menu(usr_options)
+            MainMenu.attempt_preset_load(slcted_preset)
+
+    def attempt_preset_load(preset):
+        try:
+            loaded_preset = {}
+            with open(file = f'presets\\{preset}', mode = 'r') as config:
+                loaded_preset = json.load(config)
+        except Exception as ex:
+            print(f"[!] An error occured while trying load {preset}... [!]".center(60))
+
+        if not loaded_preset:
+            print("[i] The preset you selected was empty, please try again with a valid one [i]".center(60))
+            print('\n*** [i] Returning to Main Menu... [i] ***\n')
+            MainMenu.run_main_menu()
+            return
+        else:
+            print(f'[i] Successfully loaded preset, now displaying naming conventions for {preset}.. [i]'.center(60))
+            MainMenu.show_preset_conventions(loaded_preset)
+            MainMenu.run_main_menu()
+    
+    def show_preset_conventions(loaded_preset):
+        print('[i] The naming convention requires you first specify the course number (e.g 3400) in the file name [i]')
+        time.sleep(3)
+        print(f'[i] Then seperated by an underscore, specify the abreviated corresponding folder. [i]')
+        time.sleep(3)
+        print('[i] Generally speaking, most abreviated subfolders are the first 3 characters of the folder name [i]')
+        time.sleep(3)
+        print(f'[i] However, the program has some generic abreviations for common directory names so always check your preset before naming a file [i]')
+        time.sleep(3)
+        print('[i] This is all of the data created by the program in your preset file you selected for this demonstration [i]')
+        pprint(loaded_preset, indent = 6)
+        time.sleep(5)
+        for crns, dicts in loaded_preset:
+            print(f'[i] For the course with the number {crns}... [i]'.center(60))
+            time.sleep(4)
+            print('[i] The naming conventions are based on the keys in the dictionary below which will each be explained below [i]')
+            pprint(loaded_preset[crns], indent = 4)
+            time.sleep(4)
+
+            for key_abrv, paths in loaded_preset[crns]:
+                print(f'[i] If I wanted to move a file to {crns} {os.path.basename(paths)} directory... [i]')
+                time.sleep(4)
+                print(f'\n [i] I would name the file => ("{crns}_{key_abrv}_File") \n')
+                time.sleep(4)
+                print(f'[i] A file with this name when loading this preset be moved to => {paths} [i]')
+                time.sleep(4)
+
+
+            print('[i] Lets move onto the next course stored in the dictionary. [i]')
+            input('*** << Press "Enter" To Continue ***'.center(60))
+        print('*' * 60 + '\n\n')
+        input('*** Demonstration Complete Press Enter to Return to the main menu ***'.center(60))
+
+
+
+
+
+
+
+    def preset_menu(options:list):
+        
+        '''
+            When the user wants to view the naming conventions for 
+            a given preset in the help menu this menu will then appear
+            we return the choice which is the file name of a preset
+            which we can open and parse appropriately  
+        '''
+
+        presetMenu = prompt(
+                [
+                    {
+                        "type": "list",
+                        "name": "usr_opt",
+                        "message": "[ Would you like to create one ]",
+                        "choices": options,
+                    }
+                ]
+            )
+        choice = presetMenu["usr_opt"]
+        return choice 
+    
+        
+
+
+    def attempt_preset_fetch() -> list:
+        try:
+            for _, __, files in os.walk("presets"):
+                presets = [ file 
+                            for file in files if file.endswith(".json") 
+                            and file != "usr_paths.json"
+                ]
+            return presets
+        except Exception:
+            print("[!] An error occured while fetching program preset [!]".center(60))
+            MainMenu.run_main_menu()
+            
+        
+        
+
+        
+
+    
+        
+
+    def hndle_tutorial() -> None:
+        
+        '''
+            When the user in the help menu selects "View Program Tutorial"
+        '''
 
         print('*'*60+'\n\n')
         print('[*] Displaying program tutorial.. [*]'.center(60))
         MainMenu.help_demonstration()
         print('*'*60+'\n\n')
         MainMenu.run_main_menu()
+
+
 
     # When a usr selects 'Exit'
     @staticmethod
