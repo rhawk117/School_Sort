@@ -216,10 +216,15 @@ class MainMenu:
             "[ ? Would you like to load a preset to check the naming conventions or display the program tutorial ? ]"
         )
         helpMenu.add_options([
-            "[ Check Preset Naming Conventions ]", "[ View Program Tutorial ]"
+            "[ Check a Presets Naming Conventions ]", "[ View Program Tutorial ]", 
+            "[ Learn General Naming Convention Rules ]"
         ])
         helpMenu.add_handler(1, MainMenu.hndle_preset_name)
         helpMenu.add_handler(2, MainMenu.hndle_tutorial)
+        helpMenu.add_handler(3, MainMenu.name_tutorial)
+        helpMenu.display()
+        
+        MainMenu.run_main_menu()
 
 
     def hndle_preset_name():
@@ -236,10 +241,59 @@ class MainMenu:
         usr_options = MainMenu.attempt_preset_fetch()
         if not usr_options:
             print("[i] No program presets were found, please create one before selecting this option.. [i]".center(60))
-            MainMenu.run_main_menu()
+            return
         else:
             slcted_preset = MainMenu.preset_menu(usr_options)
             MainMenu.attempt_preset_load(slcted_preset)
+    
+    def name_tutorial() -> None:
+        print('[i] Lets give an overview of how the naming convention of the program works [i]\n')
+        time.sleep(3)
+        print('[i] The naming convention requires you first specify the course number (e.g 3400) in the file name [i]\n')
+        time.sleep(3)
+        print(f'[i] Our Course Number >> 3400 '.center(60))
+        time.sleep(3)
+        print(f'[i] Then we will enter seperate the course number with an underscore in the file name of the file we want to move [i]')
+        time.sleep(3)
+        print('[i] Our File Name so far... [i]\n\n')
+        print('<< 3400_ >>'.center(60))
+        time.sleep(4)
+        print('\n\n[i] Then following the underscore we will specify the abreviated folder name of the destination folder in CSCI-3400s we want to move our file to [i]')
+        time.sleep(4)
+        print('\n[i] For this example lets say we want to move this file to the the Homework Folder in CSCI-3400 folder. [i]')
+        time.sleep(5)
+        print('[i] So we will look at keys in the 3400 dictionary in our presets file which should look like this [i]\n\n')
+        time.sleep(3)
+
+        print("""
+             "3400": {
+              
+                "Src": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400",
+            >>  "HW": "C:\\Users\\Beast\\Desktop\\School\\Spring24\\CSCI3400\\Homework"
+              
+                    }
+            """
+              )
+
+        time.sleep(5)
+        print('[i] We can see here that the folder abreviation for our Homework directory is "HW" which will add to our file name [i]\n')
+        time.sleep(3)
+        print(f' << 3400_HW_ >>'.center(60))
+        time.sleep(3)
+        print(f'[i] At this point, we will add another underscore and then enter the name giving us our final file name [i]\n')
+        time.sleep(5)
+        print(' [ Final File Name: 3400_HW_ExampleFile.pdf ]'.center(60))
+        time.sleep(3)
+        print('\n[i] Generally speaking, most abreviated subfolders are the first 3 characters of the folder name [i]')
+        print('\n[>] Example: A folder named Syllabus would be -> "Syl" \n')
+        time.sleep(3)
+        print(f'[i] However, the program has some generic abreviations for common directory names such as "HW" for Homework or "Asn" for Assignments [i]')
+        time.sleep(3)
+        print(
+            '[i] So always check your preset before naming a file you want to move [i]')
+        time.sleep(3)
+        print('*** DEMONSTRATION COMPLETE **\n')
+        input('*** Press enter to continue ****'.center(60))
 
     def attempt_preset_load(preset):
         try:
@@ -257,42 +311,37 @@ class MainMenu:
         else:
             print(f'[i] Successfully loaded preset, now displaying naming conventions for {preset}.. [i]'.center(60))
             MainMenu.show_preset_conventions(loaded_preset)
-            MainMenu.run_main_menu()
     
     def show_preset_conventions(loaded_preset):
-        print('[i] The naming convention requires you first specify the course number (e.g 3400) in the file name [i]')
+        print('[i] This is all of the data created by the program in your preset file you selected for this demonstration [i]\n')
         time.sleep(3)
-        print(f'[i] Then seperated by an underscore, specify the abreviated corresponding folder. [i]')
-        time.sleep(3)
-        print('[i] Generally speaking, most abreviated subfolders are the first 3 characters of the folder name [i]')
-        time.sleep(3)
-        print(f'[i] However, the program has some generic abreviations for common directory names so always check your preset before naming a file [i]')
-        time.sleep(3)
-        print('[i] This is all of the data created by the program in your preset file you selected for this demonstration [i]')
         pprint(loaded_preset, indent = 6)
         time.sleep(5)
-        for crns, dicts in loaded_preset:
-            print(f'[i] For the course with the number {crns}... [i]'.center(60))
+        for crns in loaded_preset.keys():
+            print(f'[i] For the course with the number {crns}... [i]')
             time.sleep(4)
-            print('[i] The naming conventions are based on the keys in the dictionary below which will each be explained below [i]')
             pprint(loaded_preset[crns], indent = 4)
             time.sleep(4)
 
-            for key_abrv, paths in loaded_preset[crns]:
-                print(f'[i] If I wanted to move a file to {crns} {os.path.basename(paths)} directory... [i]')
-                time.sleep(4)
-                print(f'\n [i] I would name the file => ("{crns}_{key_abrv}_File") \n')
-                time.sleep(4)
-                print(f'[i] A file with this name when loading this preset be moved to => {paths} [i]')
-                time.sleep(4)
+            for key_abrv in loaded_preset[crns].keys():
+                if key_abrv != "Src":
+                    print(f'[>] If I wanted to move a file to {crns}s {os.path.basename(loaded_preset[crns][key_abrv])} directory... ')
+                    time.sleep(4)
+                    print(f'\n[>] I would name the file => ("{crns}_{key_abrv}_FileName") \n')
+                    time.sleep(4)
+                    print(
+                        f'[>] A file with this name when loading this preset will be moved to => {loaded_preset[crns][key_abrv]}\n\n')
+                    time.sleep(4)
 
 
-            print('[i] Lets move onto the next course stored in the dictionary. [i]')
-            input('*** << Press "Enter" To Continue ***'.center(60))
+            print('[i] Lets move onto the next course stored in the dictionary. [i]\n\n')
+            if input('*** << Press "Enter" To Continue to the Next Course or type "esc" to go to the main menu >> ***'.center(60)).lower() == 'esc':
+                return 
+            else:
+                continue
+
         print('*' * 60 + '\n\n')
         input('*** Demonstration Complete Press Enter to Return to the main menu ***'.center(60))
-
-
 
 
 
@@ -312,7 +361,7 @@ class MainMenu:
                     {
                         "type": "list",
                         "name": "usr_opt",
-                        "message": "[ Would you like to create one ]",
+                        "message": "[ > Select a Preset To View < ]",
                         "choices": options,
                     }
                 ]
@@ -321,8 +370,6 @@ class MainMenu:
         return choice 
     
         
-
-
     def attempt_preset_fetch() -> list:
         try:
             for _, __, files in os.walk("presets"):
@@ -335,14 +382,9 @@ class MainMenu:
             print("[!] An error occured while fetching program preset [!]".center(60))
             MainMenu.run_main_menu()
             
-        
-        
-
-        
-
     
         
-
+    @staticmethod
     def hndle_tutorial() -> None:
         
         '''
@@ -371,10 +413,12 @@ class MainMenu:
     # Constructs and runs the main menu of program
     @staticmethod
     def run_main_menu() -> None:
+        
         '''
         Starts the program and runs the main menu and applies
         the appropriate handlers to each option
         '''
+        
         MainMenu.upon_start()
         # Instantiate and create the Menu object
         mainMenu = Menu(f"{MainMenu.header()}\n" + "[ Select one of the following options listed below ]")

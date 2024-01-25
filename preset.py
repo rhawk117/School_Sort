@@ -314,7 +314,7 @@ class Preset:
                     {
                         "type": "list",
                         "name": "select_path",
-                        "message": "[?] Select a preset file:",
+                        "message": "[?] Select a preset file or directory to sort:",
                         "choices": options,
                     }
                 ]
